@@ -75,7 +75,7 @@ Fields which are of struct type can use C-like syntax to assign value hints to s
 struct_type field_name = { .sub_field = value_hint };
 ```
 
-Use a C-like syntax again for for struct and enum definitions.
+Use a C-like syntax again for struct and enum definitions.
 
 Struct definitions can have value hints but must be constant (as in magic numbers). TODO Possible future extension to allow self-referential value hints.
 
@@ -116,6 +116,7 @@ Suggested attributes are
 | `name`     | The human-readable name of a field                                                                                                                                       |
 | `comment`  | Additional information about a field, to display alongside its type and name                                                                                             |
 | `wikitext` | Completely overrides the textual representation of this field, ignoring all other attributes and type information. Useful for a first-pass of parsing the existing wiki. |
+
 Example
 ```
 u8[32] red_pattern [name="Red pattern"];
@@ -130,30 +131,28 @@ Could both produce the wiki table
 | Index word | Description        |
 | ---------- | ------------------ |
 | 0          | u8[32] Red pattern |
+
 Other than in the case of `wikitext`, the textual representation of each field is left deliberately unspecified so as not to create an interface for parsing, and to allow for innovation in future output methods (such as the templates being added to the wiki by ElementW and others).
 
 
 TODO: If notice `;` followed by `[` then suggest to move inside the `;`. Don't want whitespace to be significant.
-
 
 # Semantics
 TODO: Make sure that translation types never end up in the normal area and vice versa
 
 ## Data types
 
-TODO: 
-
 | IDL Name                                                                                                          | C name                      | Rust name         | size (words) | notes                                                                                                                                               |
 | ----------------------------------------------------------------------------------------------------------------- | --------------------------- | ----------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| u8 / s8                                                                                                           | (u)int8_t / (unsigned) char | u8 / i8           | 0.25         | May be packed in with other chars through [[#bikeshedpacked]]. Defaults to 4-bye alignment                                                          |
-| u16 / s16                                                                                                         | (u)int16_t                  | u16 / i16         | 0.5          | May be packed in with another short through [[#bikeshedpacked]]. Defaults to 4-byte alignment                                                       |
+| u8 / s8                                                                                                           | (u)int8_t / (unsigned) char | u8 / i8           | 0.25         | May be packed in with other chars through [bikeshedpacked](#bikeshedpacked). Defaults to 4-bye alignment                                                          |
+| u16 / s16                                                                                                         | (u)int16_t                  | u16 / i16         | 0.5          | May be packed in with another short through [bikeshedpacked](#bikeshedpacked). Defaults to 4-byte alignment                                                       |
 | u32 / s32                                                                                                         | (u)int32_t                  | u32 / i32         | 1            |                                                                                                                                                     |
 | TODO: have a word type?                                                                                           | typedef uint32_t word;      | type word = u32;  | 1            |                                                                                                                                                     |
 | u64 / s64                                                                                                         | (u)int64_t                  | u64 / i64         | 2            | Is only 4-byte aligned (i.e. not properly aligned for C or Rust's purposes)[^u64_align] so it might be unaligned while stored in the command buffer |
 | f32                                                                                                               | ???                         | f32               | 1            |                                                                                                                                                     |
 | f64                                                                                                               | ???                         | f64               | 2            |                                                                                                                                                     |
 | ???                                                                                                               | T \*                        | \*const/mut T     | 1            |                                                                                                                                                     |
-| T[N]                                                                                                              | T[N]                        | [T; N]            | variable     | Elements are packed internally according to [[#Array Layout]] e.g. `u8[8]` is 2 words                                                               |
+| T[N]                                                                                                              | T[N]                        | [T; N]            | variable     | Elements are packed internally according to [Array Layout](#Array-Layout) e.g. `u8[8]` is 2 words                                                               |
 | Handle                                                                                                            | typedef u32 Handle          | type Handle = u32 | 1            |                                                                                                                                                     |
 | `CopyHandles[N]`                                                                                                  |                             |                   | variable     |                                                                                                                                                     |
 | `MoveHandles[N]`                                                                                                  |                             |                   | variable     |                                                                                                                                                     |
@@ -162,6 +161,7 @@ TODO:
 | `ReadBuffer<T>`                                                                                                   |                             |                   | 2            |                                                                                                                                                     |
 | `WriteBuffer<T>`                                                                                                  |                             |                   | 2            |                                                                                                                                                     |
 | `ReadWriteBuffer<T>`                                                                                              |                             |                   | 2            |                                                                                                                                                     |
+
 ## Array Layout
 Elements in an array or a `#<bikeshedpacked>` section are packed as in C according to their packed alignments:
 
@@ -176,6 +176,7 @@ Elements in an array or a `#<bikeshedpacked>` section are packed as in C accordi
 | struct          | Maximum alignment of fields |
 | array of T      | Alignment of type T         |
 | all other types | 4                           |
+
 ## Struct Layout
 Requests and Responses are laid out according to the same algorithm as structs. The algorithm is the same as in C but all fields are word-aligned, which is to say: Fields are laid out in the order they are written. Each field is word-aligned and starts at the closest word-aligned address after the previous field. For types smaller than a word this requires wrapper types in C/Rust/etc. that look like so
 
@@ -188,6 +189,7 @@ struct WordU16 {
 	u16 value;
 } __attribute__((aligned(4)));
 ```
+
 ### bikeshedpacked
 Use the `#<bikeshedpacked> {}` syntax to remove all padding between internal fields (see [Array Layout](#Array layout) for details). The start of the packed fields and any fields after the packed fields end are still word-aligned.
 
@@ -509,7 +511,7 @@ struct Reponse* NFCS:SendTagCommand(Handle handle, uint32_t unknown,
 ```
 
 ### Rust
-[[NFCS_SendTagCommand]]
+[NFCS_SendTagCommand]()
 Using my traits from https://github.com/DeltaF1/3ds-ipc-tools
 
 ```rust
