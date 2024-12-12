@@ -1,17 +1,21 @@
-Familiarity is assumed with the 3DS' [Inter-Process Communication](https://www.3dbrew.org/wiki/IPC) system. This tool will probably be most useful for people looking to
-a) port new languages and standard libraries to the 3DS
-b) implement libraries or functionality not already covered by [libctru](https://libctru.devkitpro.org/)
-c) re-implement system modules from scratch (see https://gist.github.com/kynex7510/83cec53fd9aaa5dfa1492a2b5fb53813)
-d) add entirely new APIs to use internally in their homebrew applications or to add new functionality to existing system modules
+_The stuff in between all of the CiTRus segments_
+
+***
+
+Familiarity is assumed with the 3DS' [Inter-Process Communication](https://www.3dbrew.org/wiki/IPC) system. This tool will probably be most useful for people looking to:
+1. Port new languages and standard libraries to the 3DS
+2. Implement libraries or functionality not already covered by [libctru](https://libctru.devkitpro.org/)
+3. Re-implement system modules from scratch (see https://gist.github.com/kynex7510/83cec53fd9aaa5dfa1492a2b5fb53813)
+4. Add entirely new APIs to use internally in their homebrew applications, or add new functionality to existing system modules
 
 # Rationale
-The [3dbrew](https://www.3dbrew.org/) wiki is an incredible resource with detailed descriptions of (nearly?) every service API included in the 3DS operating system. Each wiki page for a specific IPC call has tables detailing the data required to call an API and the data that API returns. Unfortunately, this information is written by multiple authors across a long period of time, and its contents and formatting varies accordingly. This information is useful for a human looking to learn about or implement these services, but it is not machine-readable. I propose an Interface Description Language (tentatively named Pith) to express the information already present in the wiki pages in a familiar and standardized format which can be used to auto-generate types and methods to use these APIs from languages such as C and Rust. This IDL can then in turn be used to generate wiki pages and other documentation in a more standardized fashion.
+The [3dbrew](https://www.3dbrew.org/) wiki is an incredible resource with detailed descriptions of (nearly?) every service API included in the 3DS operating system. Each wiki page for a specific IPC call has tables detailing the data required to call an API and the data that API returns. Unfortunately, this information is written by multiple authors across a long period of time, and its contents and formatting varies accordingly. This information is useful for a human looking to learn about or implement these services, but it is not machine-readable. I propose an Interface Description Language to express the information already present in the wiki pages in a familiar and standardized format which can be used to auto-generate types and methods to use these APIs from languages such as C and Rust. This IDL can then in turn be used to generate wiki pages and other documentation in a more standardized fashion.
 
 Converting all of the human-written human-readable wiki tables to a new format is a daunting task. There are certain patterns that have emerged for how to write these tables which I believe make the work semi-automatable. For example many wiki pages explicitly spell out the code necessary to create translate headers like `0x0000000c | (size << 4)`. This could be detected and automatically turned into a `write_buffer` value hint. The work I've seen recently to convert the tables to use uniform wiki templates will also help tremendously.
 
 An ideal system would involve some sort of browser extension which can spider through the wiki, attempt to parse as it goes, then prompt the human user for help when it does not know how to interpret something. As a fall-back, entries in a table can be represented as simply words with the full wiki description added as an [attribute](#Attributes) like `u32 word_xxx [wikitext=""];`
 # Use cases
-The descriptions can be used to output code with various levels of safety checking.
+The descriptions can be used to generate code or function signatures with various levels of safety checking.
 1. Verify the size of the request data is correct. At this stage the header value (e.g. `0x00130102`) is enough
 2. Verify that translated parameters are of the correct type/in the correct order. This requires the header + the types of translated params (including the number of headers sent with each header translation) + the required static buffer descriptors set up to receive data
 3. Typed normal parameters. This level requires knowing that a particular word or set of words represents a single object such as a u8 buffer or an f32. At this level the types can link to struct definitions e.g. the shared Animation header struct in https://www.3dbrew.org/wiki/MCURTC:SetInfoLEDPatternHeader and https://www.3dbrew.org/wiki/MCURTC:SetInfoLEDPattern
@@ -33,13 +37,13 @@ SERVICE:MethodName {
 		u8[8] array;
 		#<bikeshedpacked> {
 			u8 flag1;
-			SomeEnumType flag2;
-			u8 flag3;
+			u8 flag2;
 		}
 		SomeStructType some_normal_param_2;
+		SomeEnumType<u16> flag2;
 		u64 unaligned_u64s_work;
 
-		ReadBuffer translated_param;
+		ReadBuffer<u8[100]> translated_param;
 		MoveHandles[4] translated_param_2;
 		StaticBuffer@0<SomeOtherStructType> translated_param_3;
 	}
@@ -87,9 +91,6 @@ struct StructType {
 	field_type field_name = value_hint [attributes];
 }
 ```
-
-
-~~TODO: How to express that the API will return data back to a static buffer in the caller?~~ A static buffer descriptor in the response is enough
 
 When structs/enums are referenced by requests, the generated wiki text should create a hyperlink to their wikiurl.
 
