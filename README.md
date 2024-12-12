@@ -182,7 +182,7 @@ TODO: Make sure that translation types never end up in the normal area and vice 
 | `ReadWriteBuffer<T>`                                                                                              |                             |                   | 2            |                                                                                                                                                     |
 
 ## Array Layout
-Elements in an array or a `#<bikeshedpacked>` section are packed as in C according to their packed alignments:
+Elements in an array or a `#<bikeshedpacked>` section are packed as in C according to their packed alignments. Most types are still word-aligned but this allows for types smaller than a word to be put next to one another:
 
 | Type            | Packed Alignment (bytes)    |
 | --------------- | --------------------------- |
@@ -210,7 +210,7 @@ struct WordU16 {
 ```
 
 ### bikeshedpacked
-Use the `#<bikeshedpacked> {}` syntax to remove all padding between internal fields (see [Array Layout](#Array layout) for details). The start of the packed fields and any fields after the packed fields end are still word-aligned.
+Use the `#<bikeshedpacked> {}` syntax to lower the alignment of fields smaller than a whole word (see [Array Layout](#Array-layout) for details). The start of the packed fields and any fields after the packed fields end are still word-aligned.
 
 e.g.
 ```
@@ -228,7 +228,8 @@ Request {
 ```
 
 ## Enum representation
-TODO: Define enum type representations. For example the following enum is represented as a u8 in some contexts, but theoretically could be represented by other integers in other places. I propose to leave representation of enums up to the points of use. 
+The integer representation of C enums are notoriously squishy and implementation-defined. I propose to separate the representation of an enum from its definition, and let the places that use an enum define what size integer to use. For example the following enum is represented as a u8 in some contexts, but theoretically it could be necessary to represent it by a larger integer in an array or packed context. Enums should only be allowed to be represented by integer types.
+
 ```
 wikiurl = "https://www.3dbrew.org/wiki/PSPXI:EncryptDecryptAes#Algorithm_Types"
 enum PSPXI:Algorithm {
@@ -241,24 +242,22 @@ enum PSPXI:Algorithm {
 }
 ```
 
-So using this as a u8 could be like 
+Then this enum can be used like so 
 
 ```
 Request {
-	<bikeshed(>u8<)bikeshed>PSPXI:Algorithm algorithm_type;
-	(PSPXI:Algorithm)u8 algorithm_type;
-	PSPXI:Algorithm(u8) algorithm_type;
-	(u8)PSPXI:Algorithm algorithm_type;
-	u8(PSPXI:Algorithm) algorithm_type;
 	PSPXI:Algorithm<u8> algorithm_type;
-	u8/PSPXI:Algorithm algorithm_type;
-	PSPXI:Algorithm/u8 algorithm_type;
+}
+
+...
+
+// Some context where they need to be laid out in a particular way
+struct foo {
+	PSPXI:Algorithm<u16>[4] algorithm_list;
 }
 ```
 
-Enums should only be allowed to be represented by integer types. Signed/unsigned?
-
-TODO: Interaction with `#<bikeshedpacked>`?
+Also open to just defining the representation type as part of the enum definition.
 
 
 [^u64_align]: Armv6 supports 4-byte aligned accesses for 64-bit words[^1][^2][^3]. Unfortunately the ABI for ARM (as well as modern compilers like devkitpro's gcc and rustc) define the alignment of u64 as 8-bytes on ARMv6k. For this reason wrappers must take care to only use `memcpy` to read these values in C. A smart compiler will eliminate/inline the memcpy call anyway so it shouldn't matter for performance.
