@@ -26,7 +26,23 @@ Another goal is to produce human-readable documentation i.e. the wiki tables. An
 TODO: Find a real complicated API and use that as the syntax demo (leaving out full wikitext since that will get messy)
 
 ```
-SERVICE:MethodName {
+// SERVICE_MethodName.pith
+
+struct SERVICE:SomeStructType {
+	wikiurl = "https://3dbrew.org/wiki/SERVICE#SomeStructType"
+
+	f32 x;
+	f32 y;
+	f32 z;
+}
+
+enum SERVICE:SomeEnumType {
+	FOO = 0,
+	BAR,
+	BAZ
+}
+
+command SERVICE:MethodName {
 	wikiurl = "https://www.3dbrew.org/wiki/SERVICE:MethodName"
 
 	command_id = 0x1234
@@ -39,8 +55,8 @@ SERVICE:MethodName {
 			u8 flag1;
 			u8 flag2;
 		}
-		SomeStructType some_normal_param_2;
-		SomeEnumType<u16> flag2;
+		SERVICE:SomeStructType some_normal_param_2;
+		SERVICE:SomeEnumType<u16> flag2;
 		u64 unaligned_u64s_work;
 
 		ReadBuffer<u8[100]> translated_param;
