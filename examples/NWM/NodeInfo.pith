@@ -1,0 +1,12 @@
+struct NWM:NodeInfo {
+	wikiurl = "https://www.3dbrew.org/wiki/NWM_Services#NodeInfo_structure"
+	bikeshedpacked {
+		u64 id [wikitext="u64 ID, this is the UDS version of the FriendCodeSeed. This is loaded from BlkID 0x00090000 in the [system-config](https://www.3dbrew.org/wiki/Config_Savegame "Config Savegame") via [CfgS:GetConfigInfoBlk2](https://www.3dbrew.org/wiki/CfgS:GetConfigInfoBlk2 "CfgS:GetConfigInfoBlk2")."];
+		u8[0x14] config_bytes [wikitext="The first 0x18-bytes from BlkID 0x000A0000 in the [system-config](https://www.3dbrew.org/wiki/Config_Savegame "Config Savegame") loaded via [CfgS:GetConfigInfoBlk2](https://www.3dbrew.org/wiki/CfgS:GetConfigInfoBlk2 "CfgS:GetConfigInfoBlk2") is written here by user-processes. However, the data at +0x14(absolute offset 0x1C) is written by NWM-module later."];
+		u16 unknown [wikitext="u16, unknown. Set to 0x0 with the output from [NWMUDS:DecryptBeaconData](https://www.3dbrew.org/wiki/NWMUDS:DecryptBeaconData "NWMUDS:DecryptBeaconData")."];
+		u8 flag [wikitext="u8 flag, unknown. Originates from the u16 bitmask in the beacon node-list header. This flag is normally 0 since that bitmask is normally 0?"];
+		u8 _padding;
+		u16 network_node_id [name="NetworkNodeID"];
+		u8[6] unknown [wikitext="Normally zero?"]; 
+	}
+}
