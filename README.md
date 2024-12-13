@@ -80,8 +80,6 @@ command SERVICE:MethodName {
 }
 ```
 
-In order to drive adoption, should be able to generate C code and keep concepts/syntax C-like.
-
 Fields are declared with a syntax similar to C struct declaration.
 ```
 field_type field_name;
@@ -102,31 +100,23 @@ Use a C-like syntax again for struct and enum definitions.
 Struct definitions can have value hints but must be constant (as in magic numbers). TODO Possible future extension to allow self-referential value hints.
 
 ```
-[meta]
-wikiurl = ""
-
 struct StructType {
 	field_type field_name = value_hint [attributes];
 }
 ```
 
-When structs/enums are referenced by requests, the generated wiki text should create a hyperlink to their wikiurl.
+When structs/enums are referenced by a command, the generated wiki text should create a hyperlink to their wikiurl inside of the description.
 
-TODO: struct and enum definitions should be namespaced
-
-TODO: ~~enum members must be referenced like a rust enum e.g. `PSPXI::Algorithm::CCM_Encrypt` rather than polluting the global namespace like a C enum.~~ Does this matter? Enum members will probably never be referenced in the IDL, just their types
 ## Attributes
 
-Attributes are key-value pairs with metadata pertaining to a specific field. syntax is 
+Attributes are key-value pairs with metadata pertaining to a specific field. Their presence is optional. The syntax is 
 
 ```
-<attr> is key1 = value1, key2 = value2, ...
-
-field_type field_name [<attr>];
-field_type field_name = value_hint [<attr>];
+field_type field_name [key1 = value1, key2 = value2, ...];
+field_type field_name = value_hint [key1 = value1, key2 = value2, ...];
 ```
 
-whitespace is not significant. Values can be strings or TODO
+Keys are `identifier`s with no whitespace (TODO: formal syntax grammar). Values are strings, delimited by `"`. Internal `"` characters can be typed as `\"`. Whitespace around the `,` and `=` are optional.
 
 Suggested attributes are
 
@@ -154,7 +144,7 @@ Could both produce the wiki table
 Other than in the case of `wikitext`, the textual representation of each field is left deliberately unspecified so as not to create an interface for parsing, and to allow for innovation in future output methods (such as the templates being added to the wiki by ElementW and others).
 
 
-TODO: If notice `;` followed by `[` then suggest to move inside the `;`. Don't want whitespace to be significant.
+TODO: If the parser notices `;` followed by `[` then suggest to move the attribute block before the `;`. 
 
 # Semantics
 TODO: Make sure that translation types never end up in the normal area and vice versa
@@ -200,7 +190,7 @@ Elements in an array or a `#<bikeshedpacked>` section are packed as in C accordi
 | all other types | 4                           |
 
 ## Struct Layout
-Requests and Responses are laid out according to the same algorithm as structs. The algorithm is the same as in C but all fields are word-aligned, which is to say: Fields are laid out in the order they are written. Each field is word-aligned and starts at the closest word-aligned address after the previous field. For types smaller than a word this requires wrapper types in C/Rust/etc. that look like so
+Requests and Responses are laid out according to the same algorithm as structs. The algorithm is the same as in C, but all fields are word-aligned which is to say: Fields are laid out in the order they are written. Each field is word-aligned and starts at the closest word-aligned address after the previous field. For types smaller than a word this requires wrapper types in C/Rust/etc. that look like so
 
 ```c
 struct WordU8 {
