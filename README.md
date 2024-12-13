@@ -20,7 +20,9 @@ The descriptions can be used to generate code or function signatures with variou
 2. Verify that translated parameters are of the correct type/in the correct order. This requires the header + the types of translated params (including the number of headers sent with each header translation) + the required static buffer descriptors set up to receive data
 3. Typed normal parameters. This level requires knowing that a particular word or set of words represents a single object such as a u8 buffer or an f32. At this level the types can link to struct definitions e.g. the shared Animation header struct in https://www.3dbrew.org/wiki/MCURTC:SetInfoLEDPatternHeader and https://www.3dbrew.org/wiki/MCURTC:SetInfoLEDPattern
 4. Hints for semantics. At this level different values are tagged with semantic meaning such as "this parameter is the size of a specific buffer". This allows e.g. generating code to automatically ensure that the size in a normal parameter is the same as the size passed to a translate parameter (See: the certificate sizes in https://www.3dbrew.org/wiki/AMNet:ImportCertificates)
+
 Another goal is to produce human-readable documentation i.e. the wiki tables. An ideal system would be able to reproduce the tables on the wiki to a degree that does not lose any information. Preserving comments and explanatory text is useful if those comments cannot be easily represented in the semantic language. See [Attributes](#Attributes)
+
 # Syntax
 
 TODO: Find a real complicated API and use that as the syntax demo (leaving out full wikitext since that will get messy)
