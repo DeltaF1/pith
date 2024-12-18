@@ -13,19 +13,20 @@ The [3dbrew](https://www.3dbrew.org/) wiki is an incredible resource with detail
 
 Converting all of the human-written human-readable wiki tables to a new format is a daunting task. There are certain patterns that have emerged for how to write these tables which I believe make the work semi-automatable. For example many wiki pages explicitly spell out the code necessary to create translate headers like `0x0000000c | (size << 4)`. This could be detected and automatically turned into a `write_buffer` value hint. The work I've seen recently to convert the tables to use uniform wiki templates will also help tremendously.
 
-An ideal system would involve some sort of browser extension which can spider through the wiki, attempt to parse as it goes, then prompt the human user for help when it does not know how to interpret something. As a fall-back, entries in a table can be represented as simply words with the full wiki description added as an [attribute](#Attributes) like `u32 word_xxx [wikitext=""];`
+An ideal system would involve some sort of browser extension which can spider through the wiki, attempt to parse as it goes, then prompt the human user for help when it does not know how to interpret something. As a fall-back, entries in a table can be represented as simple u32s/words with the full wiki description added as an [attribute](#Attributes) like `u32 word_xxx [wikitext=""];`
+
 # Use cases
-The descriptions can be used to generate code or function signatures with various levels of safety checking.
-1. Verify the size of the request data is correct. At this stage the header value (e.g. `0x00130102`) is enough
-2. Verify that translated parameters are of the correct type/in the correct order. This requires the header + the types of translated params (including the number of headers sent with each header translation) + the required static buffer descriptors set up to receive data
-3. Typed normal parameters. This level requires knowing that a particular word or set of words represents a single object such as a u8 buffer or an f32. At this level the types can link to struct definitions e.g. the shared Animation header struct in https://www.3dbrew.org/wiki/MCURTC:SetInfoLEDPatternHeader and https://www.3dbrew.org/wiki/MCURTC:SetInfoLEDPattern
+One important idea is that using an IDL is useful regardless of how strict you want your generated code to be with respect to safety. Some applications may not want to use auto-generated methods and only want basic struct definitions. Here are a few examples of the levels of detail that code generators should support:
+1. Verifying that the size of the request data is correct. At this stage the [IPC header](https://www.3dbrew.org/wiki/IPC#Message_Structure) is sufficient information.
+2. Verify that translated parameters are of the correct type/in the correct order. This requires the header, the types of translated parameters (including the number of headers sent with each header translation), and the static buffer descriptors required to receive data from the response.
+3. Generate proper struct types for normal parameters. This level requires knowing that a particular word or set of words represents a single object such as a u8 buffer or an f32. At this level the types can link to struct definitions e.g. the shared Animation header struct in https://www.3dbrew.org/wiki/MCURTC:SetInfoLEDPatternHeader and https://www.3dbrew.org/wiki/MCURTC:SetInfoLEDPattern
 4. Hints for semantics. At this level different values are tagged with semantic meaning such as "this parameter is the size of a specific buffer". This allows e.g. generating code to automatically ensure that the size in a normal parameter is the same as the size passed to a translate parameter (See: the certificate sizes in https://www.3dbrew.org/wiki/AMNet:ImportCertificates)
+
+Making one Pith file with all of this information lets users choose how much they want to use.
 
 Another goal is to produce human-readable documentation i.e. the wiki tables. An ideal system would be able to reproduce the tables on the wiki to a degree that does not lose any information. Preserving comments and explanatory text is useful if those comments cannot be easily represented in the semantic language. See [Attributes](#Attributes)
 
 # Syntax
-
-TODO: Find a real complicated API and use that as the syntax demo (leaving out full wikitext since that will get messy)
 
 ```
 // SERVICE_MethodName.pith
@@ -80,11 +81,34 @@ command SERVICE:MethodName {
 }
 ```
 
-Fields are declared with a syntax similar to C struct declaration.
+A pith file contains one or more definitions. Each definition can be a [`command`](#commands), [`struct`](#structs), or [`enum`](#enums). Definition names namespaced by service and use single colons (`:`) as namespace separators.
+
+## Commands
+The most common type of definition are commands, which define the normal and translated parameters for the request and response associated with an IPC command. Each Request and Response definition inside of a command contain a series of fields. The layout of these fields is discussed in [struct layout](#struct-layout).
+
+Fields are declared with a syntax similar to C struct declarations.
 ```
 field_type field_name;
 ```
-Fields can be declared with value hints which are used to express common relationships like "pointer to" or "size of"
+Note that the type and name are separated by a space, even for array and pointer types. For example the following C struct definition
+
+```c
+struct Foo {
+	char name[8];
+	int *ptr;
+}
+```
+Would be written as
+```
+struct SRV:Foo {
+	u8[8] name;
+	int* ptr;
+}
+```
+
+TODO: If this is a big issue for the C developers then it could be changed to be more like C but I think this is simpler. Alternatively the syntax could be made more like Rust to avoid confusion switching between pith and C.
+
+Fields can optionally be declared with value hints which are used to express common relationships like "pointer to" or "size of"
 ```
 field_type field_name = value_hint;
 ```
@@ -95,17 +119,25 @@ Fields which are of struct type can use C-like syntax to assign value hints to s
 struct_type field_name = { .sub_field = value_hint };
 ```
 
-Use a C-like syntax again for struct and enum definitions.
+Fields can optionally be declared with metadata called [attributes](#attributes).
 
-Struct definitions can have value hints but must be constant (as in magic numbers). TODO Possible future extension to allow self-referential value hints.
+## Structs
+
+The syntax for struct fields is the same as Request/Response fields:
 
 ```
-struct StructType {
+struct SERVICE:StructType {
 	field_type field_name = value_hint [attributes];
 }
 ```
 
-When structs/enums are referenced by a command, the generated wiki text should create a hyperlink to their wikiurl inside of the description.
+Structs don't have to be associated with a specific service, since some could be used across services.
+
+TODO: Maybe struct fields can have value hints but must be constants (as in magic numbers). Possible future extension to allow self-referential value hints inside structs.
+
+## Enums
+
+TODO
 
 ## Attributes
 
