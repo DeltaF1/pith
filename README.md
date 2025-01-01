@@ -252,6 +252,8 @@ Request {
 }
 ```
 
+In this example the request consists of 3 words. `param_2`, `param_3`, and `param_4` are all packed into the second word, with an additional inaccessible padding byte.
+
 ## Enum representation
 The integer representation of C enums are notoriously squishy and implementation-defined. I propose to separate the representation of an enum from its definition, and let the places that use an enum define what size integer to use. For example the following enum is represented as a u8 in some contexts, but theoretically it could be necessary to represent it by a larger integer in an array or packed context. Enums should only be allowed to be represented by integer types.
 
@@ -276,7 +278,7 @@ Request {
 
 ...
 
-// Some context where they need to be laid out in a particular way
+// Some made-up context where they need to be laid out in a particular way
 struct foo {
 	PSPXI:Algorithm<u16>[4] algorithm_list;
 }
