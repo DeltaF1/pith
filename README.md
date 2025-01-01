@@ -31,7 +31,8 @@ Another goal is to produce human-readable documentation i.e. the wiki tables. An
 ```
 // SERVICE_MethodName.pith
 
-struct SERVICE:SomeStructType {
+struct SERVICE:SomeStructType 
+	// Syntax TBD
 	wikiurl = "https://3dbrew.org/wiki/SERVICE#SomeStructType"
 
 	f32 x;
@@ -39,15 +40,15 @@ struct SERVICE:SomeStructType {
 	f32 z;
 }
 
-enum SERVICE:SomeEnumType {
+enum SERVICE:SomeEnumType /* Syntax TBD */ [wikiurl = "https://3dbrew.org/wiki/SERVICE#SomeEnumType"] {
 	FOO = 0,
 	BAR,
 	BAZ
 }
 
 command SERVICE:MethodName {
+	// Syntax TBD
 	wikiurl = "https://www.3dbrew.org/wiki/SERVICE:MethodName"
-
 	command_id = 0x1234
 
 	Request {
@@ -77,6 +78,7 @@ command SERVICE:MethodName {
 		MoveHandles[1] translated_param_2;
 	}
 
+	// Syntax TBD
 	extra_wiki_information = "..."
 }
 ```
