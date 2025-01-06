@@ -64,7 +64,7 @@ command SERVICE:MethodName {
 		Header header;
 		Result result;
 
-		u32 normal_param [description = "..."];
+		u32 normal_param [comment = "..."];
 		
 		StaticBuffer@1 translated_param;
 		MoveHandles[1] translated_param_2;
