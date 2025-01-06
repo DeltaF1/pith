@@ -11,7 +11,7 @@ Familiarity is assumed with the 3DS' [Inter-Process Communication](https://www.3
 # Rationale
 The [3dbrew](https://www.3dbrew.org/) wiki is an incredible resource with detailed descriptions of (nearly?) every service API included in the 3DS operating system. Each wiki page for a specific IPC call has tables detailing the data required to call an API and the data that API returns. Unfortunately, this information is written by multiple authors across a long period of time, and its contents and formatting varies accordingly. This information is useful for a human looking to learn about or implement these services, but it is not machine-readable. I propose an Interface Description Language to express the information already present in the wiki pages in a familiar and standardized format which can be used to auto-generate types and methods to use these APIs from languages such as C and Rust. This IDL can then in turn be used to generate wiki pages and other documentation in a more standardized fashion.
 
-Converting all of the human-written human-readable wiki tables to a new format is a daunting task. There are certain patterns that have emerged for how to write these tables which I believe make the work semi-automatable. For example many wiki pages explicitly spell out the code necessary to create translate headers like `0x0000000c | (size << 4)`. This could be detected and automatically turned into a `write_buffer` value hint. The work I've seen recently to convert the tables to use uniform wiki templates will also help tremendously.
+Converting all of the human-written human-readable wiki tables to a new format is a daunting task. There are certain patterns that have emerged for how to write these tables which I believe make the work semi-automatable. For example many wiki pages explicitly spell out the code necessary to create translate headers like `0x0000000c | (size << 4)`. This could be detected and automatically turned into a WriteBuffer field. The work I've seen recently to convert the tables to use uniform wiki templates will also help tremendously.
 
 An ideal system would involve some sort of browser extension which can spider through the wiki, attempt to parse as it goes, then prompt the human user for help when it does not know how to interpret something. As a fall-back, entries in a table can be represented as simple u32s/words with the full wiki description added as an [attribute](#Attributes) like `u32 word_xxx [wikitext=""];`
 
@@ -20,11 +20,10 @@ One important idea is that using an IDL is useful regardless of how strict you w
 1. Verifying that the size of the request data is correct. At this stage the [IPC header](https://www.3dbrew.org/wiki/IPC#Message_Structure) is sufficient information.
 2. Verify that translated parameters are of the correct type/in the correct order. This requires the header, the types of translated parameters (including the number of headers sent with each header translation), and the static buffer descriptors required to receive data from the response.
 3. Generate proper struct types for normal parameters. This level requires knowing that a particular word or set of words represents a single object such as a u8 buffer or an f32. At this level the types can link to struct definitions e.g. the shared Animation header struct in https://www.3dbrew.org/wiki/MCURTC:SetInfoLEDPatternHeader and https://www.3dbrew.org/wiki/MCURTC:SetInfoLEDPattern
-4. Hints for semantics. At this level different values are tagged with semantic meaning such as "this parameter is the size of a specific buffer". This allows e.g. generating code to automatically ensure that the size in a normal parameter is the same as the size passed to a translate parameter (See: the certificate sizes in https://www.3dbrew.org/wiki/AMNet:ImportCertificates)
 
 Making one Pith file with all of this information lets users choose how much they want to use.
 
-Another goal is to produce human-readable documentation i.e. the wiki tables. An ideal system would be able to reproduce the tables on the wiki to a degree that does not lose any information. Preserving comments and explanatory text is useful if those comments cannot be easily represented in the semantic language. See [Attributes](#Attributes)
+Another goal is to produce human-readable documentation i.e. the wiki tables. An ideal system would be able to reproduce the tables on the wiki to a degree that does not lose any information. Preserving comments and explanatory text is useful if those comments cannot be easily represented in the IDL. See [Attributes](#Attributes)
 
 # Syntax
 
@@ -72,9 +71,9 @@ command SERVICE:MethodName {
 		Header header;
 		Result result;
 
-		u32 normal_param = bufsize;
+		u32 normal_param;
 		
-		StaticBuffer@1 translated_param = static_buffer(buf, bufsize);
+		StaticBuffer@1 translated_param;
 		MoveHandles[1] translated_param_2;
 	}
 
@@ -110,17 +109,6 @@ struct SRV:Foo {
 
 TODO: If this is a big issue for the C developers then it could be changed to be more like C but I think this is simpler. Alternatively the syntax could be made more like Rust to avoid confusion switching between pith and C.
 
-Fields can optionally be declared with value hints which are used to express common relationships like "pointer to" or "size of"
-```
-field_type field_name = value_hint;
-```
-
-Fields which are of struct type can use C-like syntax to assign value hints to sub-fields.
-
-```
-struct_type field_name = { .sub_field = value_hint };
-```
-
 Fields can optionally be declared with metadata called [attributes](#attributes).
 
 ## Structs
@@ -129,13 +117,11 @@ The syntax for struct fields is the same as Request/Response fields:
 
 ```
 struct SERVICE:StructType {
-	field_type field_name = value_hint [attributes];
+	field_type field_name [attributes];
 }
 ```
 
 Structs don't have to be associated with a specific service, since some could be used across services.
-
-TODO: Maybe struct fields can have value hints but must be constants (as in magic numbers). Possible future extension to allow self-referential value hints inside structs.
 
 ## Enums
 
@@ -147,7 +133,6 @@ Attributes are key-value pairs with metadata pertaining to a specific field. The
 
 ```
 field_type field_name [key1 = value1, key2 = value2, ...];
-field_type field_name = value_hint [key1 = value1, key2 = value2, ...];
 ```
 
 Keys are `identifier`s with no whitespace (TODO: formal syntax grammar). Values are strings, delimited by `"`. Internal `"` characters can be typed as `\"`. Whitespace around the `,` and `=` are optional.
@@ -288,6 +273,9 @@ struct foo {
 
 Also open to just defining the representation type as part of the enum definition.
 
+# Future work
+
+An important feature of this IDL would be the ability to relate multiple parameters in a command to one another and to input variables. For example many APIs send translated buffers using the proper descriptor pair, but send the size of the buffer again in a separate normal parameter. This pattern could be expressed by the IDL so that generated wrapper methods only ask for the size of the buffer once and use it in all appropriate locations. A previous version of this document contained an incomplete proposal for a small expression language to describe the value as well as type of command parameters. A more coherent version will be proposed in future.
 
 [^u64_align]: Armv6 supports 4-byte aligned accesses for 64-bit words[^1][^2][^3]. Unfortunately the ABI for ARM (as well as modern compilers like devkitpro's gcc and rustc) define the alignment of u64 as 8-bytes on ARMv6k. For this reason wrappers must take care to only use `memcpy` to read these values in C. A smart compiler will eliminate/inline the memcpy call anyway so it shouldn't matter for performance.
 
@@ -295,55 +283,3 @@ Also open to just defining the representation type as part of the enum definitio
 [^2]:https://developer.arm.com/documentation/ddi0419/c/Application-Level-Architecture/Application-Level-Programmers--Model/ARM-processor-data-types-and-arithmetic
 [^3]: https://www.scs.stanford.edu/~zyedidia/docs/arm/armv6.pdf
 
-## Value hints
-
-TODO: Allow arithmetic expressions? This is probably future work.
-
-There are common patterns across APIs such as sending pointers to buffers in the following manner (pseudocode):
-```
-Request {
-	u32 buffer_size;
-	u32 read_buffer_header = 0x0000000A | (buffer_size<<4);
-	u32 read_buffer_pointer = buffer;
-}
-```
-
-It would be convenient to express it like so
-
-```
-bikeshedargsyntax<char* buffer>;
-
-Request {
-	u32 buffer_size = size(buffer);
-	ReadBuffer buffer = read_buffer(buffer, size(buffer));
-}
-```
-
-In Rust the size can be determined from fat pointers, but C requires a separate argument. Need C-legible syntax to describe the concept of a pointer to a variable array. Maybe something like this?
-
-```
-Request (char[] buffer) {
-	u32 buffer_size = size(buffer);
-	ReadBuffer<T> buffer = read_buffer(buffer, size(buffer));
-}
-```
-
-which translates to
-
-```c
-void request(char* buffer, size_t bufsize) { ... }
-```
-```rust
-fn request(buffer: &[u8]) { ... }
-```
-
-| Expression                               | Description                                                                |
-| ---------------------------------------- | -------------------------------------------------------------------------- |
-| `sizeof(x)` where `x` is of type `T`     | size of `x` in bytes. equivalent to rust's `std::mem::size_of_val::<T>(x)` |
-| `countof(x)` where `x` is of type `T[N]` | Number of elements in the array, i.e. `N`                                  |
-| `{x1, x2, x3, ...}`                      | Array constructor                                                          |
-| `{.field1 = ..., .field2 = ..., ...}`    | Struct value hints                                                         |
-| `read_buffer(pointer, size)`             | Read-only buffer mapping                                                   |
-| `write_buffer(pointer, size)`            | Write-only buffer mapping                                                  |
-| `read_write_buffer(pointer, size)`       | Read/Write buffer mapping                                                  |
-| `static_buffer(pointer, size)`           | Static buffer translation                                                  |
