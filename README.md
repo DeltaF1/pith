@@ -12,7 +12,7 @@ Familiarity is assumed with the 3DS' [Inter-Process Communication](https://www.3
 3. Re-implement system modules from scratch (see https://gist.github.com/kynex7510/83cec53fd9aaa5dfa1492a2b5fb53813)
 4. Add entirely new APIs to use internally in their homebrew applications, or add new functionality to existing system modules
 
-The [3dbrew](https://www.3dbrew.org/) wiki is an incredible resource with detailed descriptions of (nearly?) every service included in the 3DS operating system. Each wiki page for a specific IPC call has tables detailing the data required to call an API and the data that API returns. Unfortunately, this information is written by multiple authors across a long period of time, and its contents and formatting varies accordingly. This information is useful for a human looking to learn about or implement these services, but it is not machine-readable. 
+The [3dbrew](https://www.3dbrew.org/) wiki is an incredible resource with detailed descriptions of (nearly?) every service included in the 3DS operating system. Each wiki page for a specific IPC call has tables detailing the data required to call an API and the data that API returns. Unfortunately, this information has been written by multiple authors across a long period of time, and its content and formatting varies accordingly. This information is useful for a human looking to learn about or implement these services, but it is not machine-readable. Expressing this information in a standard way allows automated tools to generate types and wrapper code and present documentation in any desired format.
 
 Converting all of the human-written human-readable wiki tables to a new format is a daunting task. There are certain patterns that have emerged for how to write these tables which I believe make the work semi-automatable. For example many wiki pages explicitly spell out the code necessary to create translate headers like `0x0000000c | (size << 4)`. This could be detected and automatically turned into a WriteBuffer field. The work I've seen recently to convert the tables to use uniform wiki templates will also help tremendously. An ideal system would involve some sort of browser extension which can spider through the wiki, attempt to parse as it goes, then prompt the human user for help when it does not know how to interpret something. As a fall-back, entries in a table can be represented as simple u32s/words with the full wiki description added as an [attribute](#Attributes) like `u32 word_xxx [wikitext="..."];`
 
@@ -24,7 +24,7 @@ After this ingestion process, the language can be turned around and used to gene
 // SERVICE_MethodName.pith
 
 struct SERVICE:SomeStructType 
-	// Syntax TBD
+	// Syntax for metadata TBD
 	wikiurl = "https://3dbrew.org/wiki/SERVICE#SomeStructType"
 
 	f32 x;
@@ -32,20 +32,20 @@ struct SERVICE:SomeStructType
 	f32 z;
 }
 
-enum SERVICE:SomeEnumType /* Syntax TBD */ [wikiurl = "https://3dbrew.org/wiki/SERVICE#SomeEnumType"] {
+enum SERVICE:SomeEnumType /* Syntax for metadata TBD */ [wikiurl = "https://3dbrew.org/wiki/SERVICE#SomeEnumType"] {
 	FOO = 0,
 	BAR,
 	BAZ
 }
 
 command SERVICE:MethodName {
-	// Syntax TBD
+	// Syntax for metadata TBD
 	wikiurl = "https://www.3dbrew.org/wiki/SERVICE:MethodName"
 	command_id = 0x1234
 
 	Request {
 		Header header;
-		u32 some_normal_param;
+		u32 some_normal_param [name = "Some normal parameter"];
 		u8[8] array;
 		#<bikeshedpacked> {
 			u8 flag1;
@@ -75,7 +75,7 @@ command SERVICE:MethodName {
 }
 ```
 
-A pith file contains one or more definitions. Each definition can be a [`command`](#commands), [`struct`](#structs), or [`enum`](#enums). Definition names namespaced by service and use single colons (`:`) as namespace separators.
+A pith file contains one or more definitions. Each definition can be a [`command`](#commands), [`struct`](#structs), or [`enum`](#enums). Definition names are namespaced by service and use single colons (`:`) as namespace separators.
 
 ## Commands
 The most common type of definition are commands, which define the normal and translated parameters for the request and response associated with an IPC command. Each Request and Response definition inside of a command contain a series of fields. The layout of these fields is discussed in [struct layout](#struct-layout).
