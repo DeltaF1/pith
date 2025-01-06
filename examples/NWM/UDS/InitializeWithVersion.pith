@@ -1,12 +1,13 @@
-command NWMUDS::InitializeWithVersion(Handle sharedmem, u32 size) {
+command NWMUDS::InitializeWithVersion {
 	wikiurl = "https://www.3dbrew.org/wiki/NWMUDS:InitializeWithVersion"
 	Request {
 		Header header = 0x001B0302;
-		u32 size = size [wikitext="Sharedmem size"];
+		u32 size [wikitext="Sharedmem size"];
 		NWM::NodeInfo input;
 		u16 version [comment="0x400 is the latest one as of the latest NWM-module from [9.0.0-X](https://www.3dbrew.org/wiki/9.0.0-20 "9.0.0-20")."];
-		CopyHandles[1] sharedmem = {sharedmem};
+		CopyHandles[1] sharedmem;
 	}
+
 	Response {
 		Header header;
 		Result result;
