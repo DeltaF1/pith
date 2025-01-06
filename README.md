@@ -2,28 +2,21 @@ _The stuff in between all of the CiTRus segments_
 
 ***
 
+Pith is an [Interface description language](https://en.wikipedia.org/wiki/Interface_description_language) to express the APIs of the 3DS' Horizon OS operating system in a standardized and computer-readable format. The language can be used to auto-generate types and methods to use these APIs from languages such as C and Rust.
+
+# Rationale
+
 Familiarity is assumed with the 3DS' [Inter-Process Communication](https://www.3dbrew.org/wiki/IPC) system. This tool will probably be most useful for people looking to:
 1. Port new languages and standard libraries to the 3DS
 2. Implement libraries or functionality not already covered by [libctru](https://libctru.devkitpro.org/)
 3. Re-implement system modules from scratch (see https://gist.github.com/kynex7510/83cec53fd9aaa5dfa1492a2b5fb53813)
 4. Add entirely new APIs to use internally in their homebrew applications, or add new functionality to existing system modules
 
-# Rationale
-The [3dbrew](https://www.3dbrew.org/) wiki is an incredible resource with detailed descriptions of (nearly?) every service API included in the 3DS operating system. Each wiki page for a specific IPC call has tables detailing the data required to call an API and the data that API returns. Unfortunately, this information is written by multiple authors across a long period of time, and its contents and formatting varies accordingly. This information is useful for a human looking to learn about or implement these services, but it is not machine-readable. I propose an Interface Description Language to express the information already present in the wiki pages in a familiar and standardized format which can be used to auto-generate types and methods to use these APIs from languages such as C and Rust. This IDL can then in turn be used to generate wiki pages and other documentation in a more standardized fashion.
+The [3dbrew](https://www.3dbrew.org/) wiki is an incredible resource with detailed descriptions of (nearly?) every service included in the 3DS operating system. Each wiki page for a specific IPC call has tables detailing the data required to call an API and the data that API returns. Unfortunately, this information is written by multiple authors across a long period of time, and its contents and formatting varies accordingly. This information is useful for a human looking to learn about or implement these services, but it is not machine-readable. 
 
-Converting all of the human-written human-readable wiki tables to a new format is a daunting task. There are certain patterns that have emerged for how to write these tables which I believe make the work semi-automatable. For example many wiki pages explicitly spell out the code necessary to create translate headers like `0x0000000c | (size << 4)`. This could be detected and automatically turned into a WriteBuffer field. The work I've seen recently to convert the tables to use uniform wiki templates will also help tremendously.
+Converting all of the human-written human-readable wiki tables to a new format is a daunting task. There are certain patterns that have emerged for how to write these tables which I believe make the work semi-automatable. For example many wiki pages explicitly spell out the code necessary to create translate headers like `0x0000000c | (size << 4)`. This could be detected and automatically turned into a WriteBuffer field. The work I've seen recently to convert the tables to use uniform wiki templates will also help tremendously. An ideal system would involve some sort of browser extension which can spider through the wiki, attempt to parse as it goes, then prompt the human user for help when it does not know how to interpret something. As a fall-back, entries in a table can be represented as simple u32s/words with the full wiki description added as an [attribute](#Attributes) like `u32 word_xxx [wikitext="..."];`
 
-An ideal system would involve some sort of browser extension which can spider through the wiki, attempt to parse as it goes, then prompt the human user for help when it does not know how to interpret something. As a fall-back, entries in a table can be represented as simple u32s/words with the full wiki description added as an [attribute](#Attributes) like `u32 word_xxx [wikitext=""];`
-
-# Use cases
-One important idea is that using an IDL is useful regardless of how strict you want your generated code to be with respect to safety. Some applications may not want to use auto-generated methods and only want basic struct definitions. Here are a few examples of the levels of detail that code generators should support:
-1. Verifying that the size of the request data is correct. At this stage the [IPC header](https://www.3dbrew.org/wiki/IPC#Message_Structure) is sufficient information.
-2. Verify that translated parameters are of the correct type/in the correct order. This requires the header, the types of translated parameters (including the number of headers sent with each header translation), and the static buffer descriptors required to receive data from the response.
-3. Generate proper struct types for normal parameters. This level requires knowing that a particular word or set of words represents a single object such as a u8 buffer or an f32. At this level the types can link to struct definitions e.g. the shared Animation header struct in https://www.3dbrew.org/wiki/MCURTC:SetInfoLEDPatternHeader and https://www.3dbrew.org/wiki/MCURTC:SetInfoLEDPattern
-
-Making one Pith file with all of this information lets users choose how much they want to use.
-
-Another goal is to produce human-readable documentation i.e. the wiki tables. An ideal system would be able to reproduce the tables on the wiki to a degree that does not lose any information. Preserving comments and explanatory text is useful if those comments cannot be easily represented in the IDL. See [Attributes](#Attributes)
+After this ingestion process, the language can be turned around and used to generate documentation like the wiki pages programatically. Ideally the tooling can reproduce the tables on the wiki to a degree that does not lose any information. Preserving comments and explanatory text is useful if those semantics cannot be easily represented in the IDL. See [Attributes](#Attributes)
 
 # Syntax
 
@@ -71,7 +64,7 @@ command SERVICE:MethodName {
 		Header header;
 		Result result;
 
-		u32 normal_param;
+		u32 normal_param [description = "..."];
 		
 		StaticBuffer@1 translated_param;
 		MoveHandles[1] translated_param_2;
