@@ -2,7 +2,7 @@ _The stuff in between all of the CiTRus segments_
 
 ***
 
-Pith is an [Interface description language](https://en.wikipedia.org/wiki/Interface_description_language) to express the APIs of the 3DS' Horizon OS operating system in a standardized and computer-readable format. The language can be used to auto-generate types and methods to use these APIs from languages such as C and Rust.
+Pith is an [interface description language (IDL)](https://en.wikipedia.org/wiki/Interface_description_language) to express the APIs of the 3DS' Horizon OS operating system in a standardized and computer-readable format. The language can be used to auto-generate types and methods to use these APIs from languages such as C and Rust.
 
 # Rationale
 
