@@ -1,0 +1,15 @@
+command SRV:PublishAndGetSubcriber {
+	wikiurl = "https://www.3dbrew.org/wiki/SRV:PublishAndGetSubscriber"
+
+	Request {
+		Header header = 0x000D0040;
+		u32 notification_id;
+	}
+
+	Response {
+		Header header;
+		Result result;
+		u32 count;
+		u32[count] subscriber_process_ids;
+	}
+}

@@ -1,0 +1,19 @@
+command NFCS:SendTagCommand {
+	wikiurl = "https://www.3dbrew.org/wiki/NFCS:SendTagCommand"
+	
+	Request {
+		Header header = 0x00130102;
+		u32 unknown [comment = "inr1 for send_nfctag_cmd()"];
+		u32 inputsize;
+		u32 outputsize;
+		u8 timing_value [comment = "This is the raw version of the [NFC:SendTagCommand] timing field."];
+		StaticBuffer@1<char[inputsize]> input_buffer;
+	}
+	
+	Response {
+		Header header = 0x00130082;
+		Result result;
+		u32 actual_output_size;
+		StaticBuffer@0<char[outputsize]> output_buffer;
+	}
+}

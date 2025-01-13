@@ -1,0 +1,24 @@
+enum AC:SecurityMode {
+    Open_Authentication = 0 [name="Open Authentication"],
+    WEP_40_BIT = 1 [name="WEP 40-bit"],
+    WEP_104_BIT = 2 [name="WEP 104-bit"],
+    WEP_128_BIT = 3 [name="WEP 128-bit"],
+    WPA_TKIP = 4 [name="WPA TKIP"],
+    WPA2_TKIP = 5 [name="WPA2 TKIP"],
+    WPA_AES = 6 [name="WPA AES"],
+    WPA2_AES = 7 [name="WPA2 AES"]
+}
+
+command ACU:GetConnectingSecurityMode {
+	wikiurl = "https://www.3dbrew.org/wiki/ACU:GetConnectingSecurityMode"
+
+	Request {
+		Header header = 0x00330000;
+	}
+
+	Response {
+		Header header;
+		Result result;
+		AC:SecurityMode<u32> security_mode;
+	}
+}

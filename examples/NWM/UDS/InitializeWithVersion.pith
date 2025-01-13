@@ -1,0 +1,16 @@
+command NWMUDS::InitializeWithVersion {
+	wikiurl = "https://www.3dbrew.org/wiki/NWMUDS:InitializeWithVersion"
+	Request {
+		Header header = 0x001B0302;
+		u32 size [wikitext="Sharedmem size"];
+		NWM::NodeInfo input;
+		u16 version [comment="0x400 is the latest one as of the latest NWM-module from [9.0.0-X](https://www.3dbrew.org/wiki/9.0.0-20 "9.0.0-20")."];
+		CopyHandles[1] sharedmem;
+	}
+
+	Response {
+		Header header;
+		Result result;
+		CopyHandles[1] output_event_handle [comment="[NWMUDS:GetConnectionStatus](https://www.3dbrew.org/wiki/NWMUDS:GetConnectionStatus "NWMUDS:GetConnectionStatus") is used once this event is signaled for determining the event cause, etc."];
+	}
+}
