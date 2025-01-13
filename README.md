@@ -20,10 +20,16 @@ After this ingestion process, the language can be turned around and used to gene
 
 # Syntax
 
+A contrived example to show off all the parts of the syntax. I converted some real APIs [here](/examples).
+
+
+A pith file contains one or more definitions. Each definition can be a [`command`](#commands), [`struct`](#structs), or [`enum`](#enums). Definition names are namespaced by service and use single colons (`:`) as namespace separators.
+
+
 ```
 // SERVICE_MethodName.pith
 
-struct SERVICE:SomeStructType 
+struct SERVICE:SomeStructType {
 	// Syntax for metadata TBD
 	wikiurl = "https://3dbrew.org/wiki/SERVICE#SomeStructType"
 
@@ -74,8 +80,6 @@ command SERVICE:MethodName {
 	extra_wiki_information = "..."
 }
 ```
-
-A pith file contains one or more definitions. Each definition can be a [`command`](#commands), [`struct`](#structs), or [`enum`](#enums). Definition names are namespaced by service and use single colons (`:`) as namespace separators.
 
 ## Commands
 The most common type of definition are commands, which define the normal and translated parameters for the request and response associated with an IPC command. Each Request and Response definition inside of a command contain a series of fields. The layout of these fields is discussed in [struct layout](#struct-layout).
